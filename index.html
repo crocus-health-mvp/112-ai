@@ -809,12 +809,8 @@ ${ctx}
 /* ════════════════════════════════════════════════════════════
    НАСТРОЙКИ
    ════════════════════════════════════════════════════════════ */
-/* ┌────────────────────────────────────────────────────────────┐
-   │  ЕДИНСТВЕННОЕ, ЧТО НУЖНО ПОМЕНЯТЬ ПЕРЕД ЗАЛИВКОЙ           │
-   │  Вставь сюда адрес своего Cloudflare Worker.               │
-   │  Пошагово — в DEPLOY.md                                     │
-   └────────────────────────────────────────────────────────────┘ */
-const AI_ENDPOINT = 'ВСТАВЬ_СЮДА_АДРЕС_ВОРКЕРА';
+/* Адрес воркера. Уже настроен — менять не нужно. */
+const AI_ENDPOINT = 'https://112-ai.zhcg2b4hg4.workers.dev/';
 
 /* Модель для чата и для голоса. Голос — быстрее, чтобы не было пауз в разговоре. */
 const MODEL       = 'claude-sonnet-4-6';
@@ -868,9 +864,6 @@ function go(id){
 }
 
 async function askAI(system, history, maxTokens = 600, model = MODEL){
-  if (AI_ENDPOINT.startsWith('ВСТАВЬ')){
-    throw new Error('AI_ENDPOINT не настроен — смотри DEPLOY.md');
-  }
   const r = await fetch(AI_ENDPOINT, {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ model, max_tokens:maxTokens, system, messages:history })
