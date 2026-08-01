@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0A0A0B">
+<title>112 AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#0A0A0B; --panel:#151517; --panel-2:#1E1E21; --line:#2A2A2E;
+  --sos:#E8112D; --paper:#F2F2F0; --muted:#84848C;
+  --safe:#00C46A; --amber:#FFB020; --tick:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+button,.hold,.hold *,.chip,.tab,.bigduo button{
+  -webkit-touch-callout:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}
+html,body{height:100%;overflow:hidden}
+body{background:var(--void);color:var(--paper);font-family:'Golos Text',system-ui,sans-serif;
+  font-size:16px;line-height:1.45;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,textarea{font:inherit;color:inherit}
+
+#app{max-width:440px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;
+  position:relative;background:var(--void);overflow:hidden}
+
+.ticks{position:absolute;inset:0;pointer-events:none;z-index:5;display:none}
+.ticks.on{display:block}
+.ticks::before,.ticks::after,.ticks i::before,.ticks i::after{
+  content:'';position:absolute;width:var(--tick);height:var(--tick);border:2px solid var(--sos)}
+.ticks::before{top:10px;left:10px;border-right:0;border-bottom:0}
+.ticks::after{top:10px;right:10px;border-left:0;border-bottom:0}
+.ticks i::before{bottom:10px;left:10px;border-right:0;border-top:0}
+.ticks i::after{bottom:10px;right:10px;border-left:0;border-top:0}
+
+.eyebrow{font-family:'Oswald',sans-serif;font-weight:500;font-size:11px;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+h1,h2,h3{font-family:'Oswald',sans-serif;font-weight:600;line-height:1.1;letter-spacing:.01em}
+h1{font-size:34px;text-transform:uppercase}
+h2{font-size:24px;text-transform:uppercase}
+h3{font-size:17px;text-transform:uppercase;letter-spacing:.04em}
+.mono{font-family:'JetBrains Mono',monospace}
+.muted{color:var(--muted)} .sm{font-size:14px} .xs{font-size:12.5px}
+
+.screen{display:none;flex:1;flex-direction:column;padding:52px 22px 24px;min-height:0}
+.screen.on{display:flex}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+.logo{font-family:'Oswald',sans-serif;font-weight:700;display:inline-flex;align-items:baseline;gap:.14em}
+.logo .n{color:var(--sos)} .logo .a{color:var(--paper)}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+  min-height:58px;padding:16px 20px;border-radius:6px;font-family:'Oswald',sans-serif;
+  font-weight:600;font-size:16px;letter-spacing:.06em;text-transform:uppercase;
+  background:var(--panel-2);border:1px solid var(--line);transition:transform .08s ease}
+.btn:active{transform:scale(.985)}
+.btn.primary{background:var(--sos);border-color:var(--sos);color:#fff}
+.btn.ghost{background:transparent}
+.btn.safe{background:var(--safe);border-color:var(--safe);color:#04140B}
+.btn+.btn{margin-top:10px}
+.btn.slim{min-height:46px;font-size:14px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px}
+.card+.card{margin-top:14px}
+.card.alert{border-color:var(--amber);background:#1C1608}
+.card.crit{border-color:var(--sos);background:#1C0A0D}
+.card.ok{border-color:var(--safe);background:#06180E}
+.card.calm{border-color:var(--safe);background:#0C1A13}
+.framed.calm::before,.framed.calm::after{border-color:var(--safe)}
+.golink.soft{color:var(--safe)}
+.framed{position:relative}
+.framed::before,.framed::after{content:'';position:absolute;width:10px;height:10px;border:2px solid var(--sos)}
+.framed::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.framed::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+
+label.f{display:block;margin-bottom:14px}
+label.f>span{display:block;margin-bottom:6px}
+.req{color:var(--sos);margin-left:3px}
+.inp{width:100%;padding:14px;background:var(--panel);border:1px solid var(--line);
+  border-radius:6px;outline:none;transition:border-color .15s}
+.inp:focus-visible{border-color:var(--sos)}
+.inp.bad{border-color:var(--sos);background:#1C0A0D}
+.err{display:none;color:var(--sos);font-size:12.5px;margin-top:6px}
+.err.on{display:block}
+.shake{animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+.row{display:flex;gap:10px} .row>*{flex:1}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:11px 16px;border:1px solid var(--line);border-radius:999px;
+  background:var(--panel);font-size:14px;transition:.15s}
+.chip[aria-pressed="true"]{background:var(--sos);border-color:var(--sos);color:#fff}
+.chips.bad .chip{border-color:var(--sos)}
+
+.topbar{display:flex;flex:none;align-items:center;justify-content:space-between;
+  padding:46px 20px 12px;border-bottom:1px solid var(--line)}
+.geo{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--safe);flex:none}
+
+.tabbar{display:flex;flex:none;border-top:1px solid var(--line);background:var(--panel);
+  padding-bottom:env(safe-area-inset-bottom)}
+.tab{flex:1;padding:11px 2px 13px;display:flex;flex-direction:column;align-items:center;
+  gap:5px;color:var(--muted);font-family:'Oswald',sans-serif;font-size:9.5px;
+  letter-spacing:.1em;text-transform:uppercase}
+.tab svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8}
+.tab.on{color:var(--paper)} .tab.on svg{stroke:var(--sos)}
+
+.sos-fab{position:absolute;right:18px;bottom:88px;z-index:20;width:70px;height:70px;
+  transition:bottom .18s ease;
+  border-radius:50%;background:var(--sos);color:#fff;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:700;
+  font-size:17px;letter-spacing:.06em;box-shadow:0 0 0 8px rgba(232,17,45,.16),0 10px 30px rgba(0,0,0,.6)}
+.sos-fab span{font-size:8px;letter-spacing:.14em;opacity:.85;margin-top:1px}
+
+
+.bigduo{display:flex;gap:11px;margin:18px 0 18px}
+.bigduo button{flex:1;min-height:148px;border-radius:10px;padding:16px 10px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  position:relative;transition:transform .08s ease}
+.bigduo button:active{transform:scale(.98)}
+.bigduo .ic{font-size:28px;line-height:1}
+.bigduo .t{font-family:'Oswald',sans-serif;font-weight:700;font-size:28px;
+  letter-spacing:.04em;text-transform:uppercase;line-height:1}
+.bigduo .callb{background:var(--sos);color:#fff}
+.bigduo .sosb{background:#1C0A0D;color:var(--sos);border:2px solid var(--sos)}
+.bigduo .sosb::before,.bigduo .sosb::after{content:'';position:absolute;
+  width:16px;height:16px;border:2px solid var(--sos)}
+.bigduo .sosb::before{top:8px;left:8px;border-right:0;border-bottom:0}
+.bigduo .sosb::after{bottom:8px;right:8px;border-left:0;border-top:0}
+.dial{display:flex;gap:8px;margin:10px 0 22px}
+.dial button{flex:1;padding:14px 4px;border:1px solid var(--line);border-radius:8px;
+  background:var(--panel);display:flex;flex-direction:column;align-items:center;gap:5px;
+  transition:.12s}
+.dial button:active{background:#1C0A0D;border-color:var(--sos)}
+.dial .num{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:20px;color:var(--sos)}
+.dial .lb{font-size:10px;color:var(--muted);letter-spacing:.03em}
+.confirm{position:absolute;inset:0;z-index:80;background:rgba(10,10,11,.92);
+  display:none;align-items:center;justify-content:center;padding:26px;overflow-y:auto}
+.confirm.on{display:flex}
+.confirm-box{width:100%;background:var(--panel);border:1px solid var(--line);
+  border-radius:12px;padding:22px}
+.legend{display:flex;flex-direction:column;gap:12px;margin-bottom:22px}
+.legend div{display:flex;gap:12px;align-items:baseline}
+.legend b{font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--sos);
+  flex:none;width:56px;text-align:right}
+.legend span{font-size:13.5px;line-height:1.4;color:var(--muted)}
+.escalate{align-self:flex-start;max-width:88%;margin-top:-4px;
+  background:#1C0A0D;border:2px solid var(--sos);border-radius:10px;padding:14px 16px;
+  display:flex;flex-direction:column;gap:9px}
+.escalate p{font-size:13.5px;line-height:1.4}
+.escalate button{background:var(--sos);color:#fff;border-radius:6px;min-height:48px;
+  font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;
+  letter-spacing:.06em;text-transform:uppercase}
+.offer{align-self:flex-start;max-width:88%;margin-top:-4px;
+  background:#0C1A13;border:2px solid var(--safe);border-radius:10px;padding:14px 16px;
+  display:flex;flex-direction:column;gap:10px}
+.offer p{font-size:13.5px;line-height:1.4}
+.offer .go{background:var(--safe);color:#04140B;border-radius:6px;min-height:50px;
+  font-family:'Oswald',sans-serif;font-weight:700;font-size:15px;
+  letter-spacing:.05em;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;gap:8px}
+.offer .stay{min-height:40px;font-size:13px;color:var(--muted);
+  border:1px solid var(--line);border-radius:6px}
+.offer.used{opacity:.45}
+.call-layer.psy .orb{background:var(--safe)}
+.call-layer.psy .orb::after{border-color:var(--safe)}
+.call-layer.psy .line b{color:var(--safe)}
+.call-layer.psy .demo{background:var(--safe);color:#04140B}
+.call-layer.psy .call-actions .end{background:var(--panel-2);border-color:var(--line);color:var(--paper)}
+
+.sos-layer{position:absolute;inset:0;z-index:60;background:var(--void);
+  display:none;flex-direction:column;padding:52px 22px 30px;overflow-y:auto}
+.sos-layer.on{display:flex}
+.hold-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px}
+.hold{position:relative;width:236px;height:236px;border-radius:50%;display:flex;flex:none;
+  flex-direction:column;align-items:center;justify-content:center;background:var(--sos);
+  color:#fff;text-align:center;padding:20px;font-family:'Oswald',sans-serif;font-weight:700;
+  font-size:26px;text-transform:uppercase;line-height:1.05;touch-action:none;user-select:none}
+.hold small{display:block;font-size:11px;letter-spacing:.16em;font-weight:500;opacity:.9;margin-top:10px}
+.ring{position:absolute;inset:-15px;width:calc(100% + 30px);height:calc(100% + 30px);
+  transform:rotate(-90deg);overflow:visible;pointer-events:none}
+.ring circle{fill:none}                 /* толщину задаёт атрибут в разметке */
+.ring .bg{stroke:rgba(255,255,255,.16)}
+.ring .fg{stroke:#fff;stroke-linecap:butt;will-change:stroke-dashoffset}
+.hold.holding{transform:scale(.975)}
+.hold{transition:transform .15s ease}
+.beacon{width:14px;height:14px;border-radius:50%;background:var(--safe);animation:pulse 1.3s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(0,196,106,.55)}70%{box-shadow:0 0 0 22px rgba(0,196,106,0)}100%{box-shadow:0 0 0 0 rgba(0,196,106,0)}}
+.demo{background:var(--amber);color:#140F00;font-family:'Oswald',sans-serif;font-size:11px;
+  letter-spacing:.14em;text-transform:uppercase;padding:8px 12px;border-radius:4px;text-align:center}
+.svc{display:flex;gap:9px;margin-top:14px}
+.svc button{flex:1;padding:15px 6px;border:1px solid var(--line);border-radius:6px;
+  background:var(--panel);display:flex;flex-direction:column;align-items:center;gap:5px}
+.svc button .num{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:21px}
+.svc button .lb{font-size:10.5px;color:var(--muted)}
+.svc button[aria-pressed="true"]{border-color:var(--sos);background:#1C0A0D}
+.svc button[aria-pressed="true"] .lb{color:var(--paper)}
+.refine{margin-top:12px;min-height:52px;font-size:15px;
+  max-height:0;padding-top:0;padding-bottom:0;margin-top:0;
+  opacity:0;overflow:hidden;transition:max-height .22s ease,opacity .18s ease,
+  margin-top .22s ease,padding .22s ease}
+.refine.on{max-height:60px;opacity:1;margin-top:12px;padding-top:16px;padding-bottom:16px}
+.svc-done{display:none;align-items:flex-start;gap:9px;margin-top:12px;
+  padding:12px 14px;border:1px solid var(--safe);border-radius:8px;
+  background:#06180E;font-size:13.5px;line-height:1.4}
+.svc-done.on{display:flex}
+.svc-done .tick{color:var(--safe);font-weight:700;flex:none}
+
+.call-layer{position:absolute;inset:0;z-index:70;background:var(--void);
+  display:none;flex-direction:column;padding:46px 22px 26px;overflow-y:auto}
+.call-layer.on{display:flex}
+.orb-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px}
+.orb{width:150px;height:150px;border-radius:50%;background:var(--sos);position:relative;
+  display:flex;align-items:center;justify-content:center;flex:none}
+.orb::after{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid var(--sos);opacity:0}
+.orb.live::after{animation:ripple 1.6s infinite}
+@keyframes ripple{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.7);opacity:0}}
+.bars{display:flex;gap:4px;align-items:flex-end;height:44px}
+.bars i{width:5px;background:#fff;border-radius:3px;height:8px;transition:height .12s ease}
+.state{font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--muted)}
+.transcript{width:100%;max-height:190px;overflow-y:auto;display:flex;flex-direction:column;gap:9px}
+.line{font-size:14.5px;line-height:1.4}
+.line b{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--sos);display:block;margin-bottom:3px}
+.line.me b{color:var(--muted)}
+.call-actions{display:flex;gap:10px}
+.call-actions button{flex:1;min-height:56px;border-radius:6px;font-family:'Oswald',sans-serif;
+  font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:14px;
+  background:var(--panel-2);border:1px solid var(--line)}
+.call-actions .end{background:var(--sos);border-color:var(--sos);color:#fff}
+.call-actions #muteBtn.off{background:transparent;color:var(--muted)}
+
+.chat{flex:1;min-height:0;overflow-y:auto;padding:16px 18px 8px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:82%;padding:12px 15px;border-radius:14px;font-size:15px;line-height:1.45}
+.msg.bot{background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:4px;align-self:flex-start}
+.msg.me{background:var(--sos);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
+.msg.sys{align-self:center;background:transparent;border:1px dashed var(--line);
+  color:var(--muted);font-size:12.5px;text-align:center}
+.who{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--sos);margin-bottom:5px}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 12px}
+.quick button{padding:12px 10px;border:1px solid var(--line);border-radius:10px;
+  background:var(--panel);font-size:13px;line-height:1.25;text-align:center;
+  min-height:44px;display:flex;align-items:center;justify-content:center;
+  transition:.14s}
+.quick button:active{border-color:var(--sos);background:#1C0A0D}
+.composer{display:flex;gap:9px;padding:10px 16px 14px;border-top:1px solid var(--line);align-items:center}
+.sos-mini{width:46px;height:46px;border-radius:50%;flex:none;background:#1C0A0D;
+  border:2px solid var(--sos);color:var(--sos);font-family:'Oswald',sans-serif;
+  font-weight:700;font-size:12px;letter-spacing:.04em;
+  display:flex;align-items:center;justify-content:center}
+.sos-mini:active{background:var(--sos);color:#fff}
+.composer .inp{border-radius:22px;padding:13px 16px}
+.send{width:46px;height:46px;border-radius:50%;background:var(--sos);color:#fff;flex:none;
+  display:flex;align-items:center;justify-content:center;font-size:19px}
+
+.qr{width:210px;height:210px;margin:0 auto;background:#fff;padding:12px;border-radius:8px}
+.qr svg{width:100%;height:100%}
+.steps{display:flex;gap:5px;margin-bottom:26px}
+.steps i{height:3px;flex:1;background:var(--line);border-radius:2px}
+.steps i.on{background:var(--sos)}
+#v-home .card{padding:14px}
+#v-home .card+.card{margin-top:14px}
+#v-home h3{font-size:16px}
+.golink{display:inline-flex;align-items:center;gap:6px;margin-top:9px;
+  font-family:'Oswald',sans-serif;font-weight:600;font-size:12.5px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--sos)}
+.findgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.findgrid button{min-height:88px;border:1px solid var(--line);border-radius:10px;
+  background:var(--panel);font-family:'Oswald',sans-serif;font-weight:600;
+  font-size:14px;letter-spacing:.05em;text-transform:uppercase;line-height:1.25;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  padding:12px 8px;transition:.14s}
+.findgrid button:active{border-color:var(--sos);background:#1C0A0D}
+.stack>*+*{margin-top:12px}
+.divider{height:1px;background:var(--line);margin:18px 0}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="ticks on" id="tickFrame"><i></i></div>
+
+  <section class="screen on" id="s-splash">
+    <div class="scroll" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
+      <div class="logo" style="font-size:76px"><span class="n">112</span><span class="a">AI</span></div>
+      <p class="eyebrow" style="margin-top:14px">Экстренная помощь рядом</p>
+    </div>
+    <button class="btn primary" onclick="go('s-auth')">Начать</button>
+  </section>
+
+  <section class="screen" id="s-back">
+    <div class="scroll" style="display:flex;flex-direction:column;justify-content:center">
+      <div class="eyebrow">С возвращением</div>
+      <h1 style="margin-top:8px" id="backName">—</h1>
+      <div class="card framed" style="margin-top:18px">
+        <div class="stack sm">
+          <div>Адрес · <span id="backAddr" class="muted">—</span></div>
+          <div>Здоровье · <span id="backHealth" class="muted">—</span></div>
+          <div>Близкие · <span id="backRel" class="muted">—</span></div>
+        </div>
+      </div>
+      <p class="xs muted" style="margin-top:14px">Данные сохранены на этом устройстве. Помощь уйдёт вместе с ними.</p>
+    </div>
+    <button class="btn primary" onclick="launch()">Войти</button>
+    <button class="btn ghost" onclick="forgetProfile()">Это не я — сбросить</button>
+  </section>
+
+  <section class="screen" id="s-auth">
+    <div class="scroll">
+      <div class="steps"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+      <h1>Кто вы?</h1>
+      <p class="muted sm" style="margin-top:10px">Данные нужны, чтобы служба знала о вас всё ещё до приезда.</p>
+      <div style="margin-top:28px">
+        <button class="btn primary" onclick="auth('gos')">Войти через Госуслуги</button>
+        <button class="btn ghost" onclick="auth('manual')">Заполнить вручную</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="s-geo">
+    <div class="scroll">
+      <div class="steps"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+      <h1>Где вы</h1>
+      <p class="muted sm" style="margin-top:10px">Без геолокации приложение не сможет вызвать помощь. Это единственное обязательное разрешение.</p>
+      <div class="card framed" style="margin-top:24px">
+        <div class="eyebrow">Доступ к местоположению</div>
+        <div class="stack" style="margin-top:14px">
+          <button class="btn slim" onclick="geo('Однократно')">Однократно</button>
+          <button class="btn slim" onclick="geo('При использовании')">При использовании приложения</button>
+          <button class="btn slim primary" onclick="geo('Всегда')">Всегда — рекомендуем</button>
+        </div>
+      </div>
+      <p class="xs muted" style="margin-top:14px">«Всегда» позволяет отправить координаты, даже если вы не успели открыть приложение.</p>
+    </div>
+  </section>
+
+  <!-- АНКЕТА -->
+  <section class="screen" id="s-form">
+    <div class="scroll" id="formScroll">
+      <div class="steps" id="formSteps"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+      <h1 id="formTitle">О вас</h1>
+      <p class="muted sm" style="margin-top:8px" id="formSub">Это увидит только бригада, которая к вам едет.</p>
+      <p class="xs muted" style="margin-top:8px">Поля со <span class="req">*</span> заполняются обязательно — без них вызов не сработает.</p>
+
+      <div style="margin-top:22px">
+        <div class="eyebrow" style="margin-bottom:12px">Личные данные</div>
+
+        <label class="f"><span class="sm muted">Имя<i class="req">*</i></span>
+          <input class="inp" id="fName" placeholder="Как обращаться">
+          <div class="err" id="eName"></div></label>
+
+        <label class="f" id="fRelWrap" style="display:none"><span class="sm muted">Кем приходится<i class="req">*</i></span>
+          <input class="inp" id="fRel" placeholder="Мама, сын, супруга">
+          <div class="err" id="eRel"></div></label>
+
+        <div class="row">
+          <label class="f"><span class="sm muted">Возраст<i class="req">*</i></span>
+            <input class="inp mono" id="fAge" type="number" inputmode="numeric" placeholder="34">
+            <div class="err" id="eAge"></div></label>
+          <label class="f"><span class="sm muted">Пол<i class="req">*</i></span>
+            <div class="chips" id="fSex">
+              <button class="chip" aria-pressed="false" onclick="pick(this,'eSex')">М</button>
+              <button class="chip" aria-pressed="false" onclick="pick(this,'eSex')">Ж</button>
+            </div>
+            <div class="err" id="eSex"></div></label>
+        </div>
+
+        <div class="divider"></div>
+        <div class="eyebrow" style="margin-bottom:12px">Адреса</div>
+        <label class="f"><span class="sm muted">Основной<i class="req">*</i></span>
+          <input class="inp" id="fAddr" placeholder="Город, улица, дом, квартира">
+          <div class="err" id="eAddr"></div></label>
+        <div id="extraAddr"></div>
+        <button class="btn slim ghost" onclick="addAddr()">+ Добавить адрес</button>
+
+        <div class="divider"></div>
+        <div class="eyebrow" style="margin-bottom:12px">Здоровье<i class="req">*</i></div>
+        <p class="xs muted" style="margin-bottom:12px">Отметьте то, о чём врач должен узнать в первую секунду. Если ничего нет — так и скажите.</p>
+        <div class="chips" id="fHealth">
+          <button class="chip" aria-pressed="false" onclick="hToggle(this)">Аллергия</button>
+          <button class="chip" aria-pressed="false" onclick="hToggle(this)">Диабет</button>
+          <button class="chip" aria-pressed="false" onclick="hToggle(this)">Сердце</button>
+          <button class="chip" aria-pressed="false" onclick="hToggle(this)">Астма</button>
+          <button class="chip" aria-pressed="false" onclick="hToggle(this)">Эпилепсия</button>
+          <button class="chip" aria-pressed="false" onclick="hToggle(this)">Беременность</button>
+          <button class="chip" data-none="1" aria-pressed="false" onclick="hToggle(this)">Ничего из этого</button>
+        </div>
+        <div class="err" id="eHealth"></div>
+        <label class="f" style="margin-top:14px"><span class="sm muted">Препараты, ограничения, что ещё важно</span>
+          <textarea class="inp" id="fNotes" rows="3" placeholder="Например: не переносит пенициллин"></textarea></label>
+      </div>
+    </div>
+    <button class="btn primary" id="formBtn" onclick="saveForm()">Сохранить</button>
+  </section>
+
+  <section class="screen" id="s-tour">
+    <div class="scroll">
+      <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+      <div class="who">Ассистент</div>
+      <h1 id="tourH">Главная</h1>
+      <div class="card framed" style="margin-top:20px"><p id="tourP" class="sm"></p></div>
+      <div class="mono xs muted" style="margin-top:16px" id="tourN">01 / 04</div>
+    </div>
+    <button class="btn primary" onclick="tourNext()" id="tourBtn">Дальше</button>
+  </section>
+
+  <section class="screen" id="s-fam">
+    <div class="scroll">
+      <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+      <div class="who">Ассистент</div>
+      <h1 style="margin-top:8px">Близкие</h1>
+      <p class="sm muted" style="margin-top:12px">Забота о близких — это важно. Хотите добавить информацию о них, чтобы в критической ситуации не терять время?</p>
+      <div id="famList" style="margin-top:22px"></div>
+    </div>
+    <button class="btn primary" onclick="famForm()">Да, добавить</button>
+    <button class="btn ghost" onclick="famDone(false)">Нет, спасибо</button>
+  </section>
+
+  <section class="screen" id="s-famlist">
+    <div class="scroll">
+      <div class="who">Ассистент</div>
+      <h1 style="margin-top:8px">Ваши близкие</h1>
+      <div id="famList2" style="margin-top:20px"></div>
+    </div>
+    <button class="btn ghost" onclick="famForm()">+ Добавить ещё</button>
+    <button class="btn primary" onclick="famDone(true)">Далее</button>
+  </section>
+
+  <section class="screen" id="s-famdone">
+    <div class="scroll" style="display:flex;flex-direction:column;justify-content:center">
+      <div class="who">Ассистент</div>
+      <h1 style="margin-top:8px" id="doneH">Готово</h1>
+      <div class="card framed" style="margin-top:18px"><p class="sm" id="doneP"></p></div>
+    </div>
+    <button class="btn primary" onclick="launch()">Открыть 112 AI</button>
+  </section>
+
+  <div id="main" style="display:none;flex:1;flex-direction:column;min-height:0">
+    <header class="topbar">
+      <div class="logo" style="font-size:23px"><span class="n">112</span><span class="a">AI</span></div>
+      <button class="geo" onclick="askForget()"><i class="dot"></i><span id="geoLabel">Геолокация активна</span></button>
+    </header>
+
+    <div class="scroll v" id="v-home" style="padding:14px 20px 110px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between">
+        <div class="eyebrow">Вокруг вас</div>
+        <button class="mono xs" style="color:var(--sos)" onclick="cycleDemo()">Тверской р-н</button>
+      </div>
+
+      <div id="homeFeed" style="margin-top:11px"></div>
+
+      <div class="eyebrow" style="margin:22px 0 9px">Рядом с вами</div>
+      <div class="card">
+        <div class="mono xs" style="color:var(--safe)">340 М</div>
+        <h3 style="margin-top:6px">Укрытие · школа №1231</h3>
+        <p class="sm muted" style="margin-top:5px">Подвал, вход со двора. Круглосуточно.</p>
+      </div>
+      <div class="card">
+        <div class="mono xs" style="color:var(--safe)">600 М</div>
+        <h3 style="margin-top:6px">Аптека, круглосуточно</h3>
+        <p class="sm muted" style="margin-top:5px">Тверская 18, без перерыва.</p>
+      </div>
+
+      <div class="eyebrow" style="margin:22px 0 9px">Обновления</div>
+      <div class="card">
+        <h3>Отключение воды 3 августа</h3>
+        <p class="sm muted" style="margin-top:5px">Плановые работы, с 09:00 до 18:00 в вашем доме.</p>
+      </div>
+    </div>
+
+    <div class="v" id="v-chat" style="display:none;flex-direction:column;min-height:0;flex:1">
+      <div class="chat" id="chatBox"></div>
+      <div class="quick">
+        <button onclick="ask('Что делать, если увидел БПЛА?')">Увидел БПЛА</button>
+        <button onclick="ask('Что делать при пожаре в квартире?')">Пожар в квартире</button>
+        <button onclick="ask('Как понять, что пора вызывать скорую?')">Когда звать скорую</button>
+        <button onclick="ask('За мной кто-то идёт вечером, что делать?')">За мной идут</button>
+        <button onclick="ask('Мне тревожно, хочу поговорить')">Тревожно</button>
+        <button onclick="ask('У меня паническая атака, помоги')">Паническая атака</button>
+      </div>
+      <div class="composer">
+        <button class="sos-mini" onclick="openSOS()">SOS</button>
+        <input class="inp" id="chatIn" placeholder="Спросите о безопасности" onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="send" onclick="sendChat()">↑</button>
+      </div>
+    </div>
+
+    <div class="scroll v" id="v-hot" style="display:none;padding:18px 20px 100px">
+      <div class="eyebrow">Горячая линия</div>
+      <h2 style="margin-top:6px">Экстренная помощь ⛑️</h2>
+
+      <div class="bigduo">
+        <button class="callb" onclick="openCall()">
+          <span class="ic">📞</span>
+          <span class="t">Вызов</span>
+        </button>
+        <button class="sosb" onclick="openSOS()">
+          <span class="ic">⛑️</span>
+          <span class="t">SOS</span>
+        </button>
+      </div>
+
+      <div class="eyebrow">Позвонить напрямую</div>
+      <div class="dial">
+        <button onclick="confirmCall('101','01 · Пожарные')"><span class="num">01</span><span class="lb">Пожарные</span></button>
+        <button onclick="confirmCall('102','02 · Полиция')"><span class="num">02</span><span class="lb">Полиция</span></button>
+        <button onclick="confirmCall('103','03 · Скорая')"><span class="num">03</span><span class="lb">Скорая</span></button>
+        <button onclick="confirmCall('104','04 · Газовая служба')"><span class="num">04</span><span class="lb">Газ</span></button>
+      </div>
+
+      <div class="legend">
+        <div><b>Вызов</b><span>Если можете говорить. Оператор отвечает сразу и ведёт вас голосом до приезда бригады.</span></div>
+        <div><b>SOS</b><span>Если говорить нельзя. Зажать на 2 секунды — помощь выедет молча, без единого звука.</span></div>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Уйдёт вместе с вызовом</div>
+        <div class="stack sm" style="margin-top:12px">
+          <div>Координаты · <span class="mono">55.7558, 37.6173</span></div>
+          <div>Профиль · <span id="hotWho">—</span></div>
+          <div>Здоровье · <span id="hotHealth">—</span></div>
+        </div>
+      </div>
+      <p class="xs muted" style="margin-top:14px">Диспетчер увидит эти данные до того, как вы успеете что-то сказать.</p>
+    </div>
+
+    <div class="v" id="v-find" style="display:none;flex-direction:column;min-height:0;flex:1;padding:18px 20px 16px">
+      <h2>Поиск</h2>
+      <input class="inp" style="margin-top:14px" placeholder="Опишите, что вы ищете" onkeydown="if(event.key==='Enter'){openAsk(this.value);this.value=''}">
+      <div class="eyebrow" style="margin:20px 0 10px">Часто ищут</div>
+      <div class="findgrid">
+        <button onclick="openAsk('Ближайшее укрытие')">Ближайшее<br>укрытие</button>
+        <button onclick="openAsk('Круглосуточная аптека рядом')">Круглосуточная<br>аптека</button>
+        <button onclick="openAsk('Что делать при отключении связи и интернета?')">Пропала<br>связь</button>
+        <button onclick="openAsk('Куда идти при эвакуации из района?')">Эвакуация</button>
+      </div>
+      <div style="flex:1;min-height:8px"></div>
+      <div class="divider" style="margin:12px 0"></div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="sos-mini" onclick="openSOS()">SOS</button>
+        <p class="sm muted" style="flex:1">Поддержка · <span class="mono">+7 123 456 78 90</span></p>
+      </div>
+    </div>
+
+    <button class="sos-fab" id="fab" onclick="openSOS()">SOS<span>ПОМОЩЬ</span></button>
+
+    <nav class="tabbar">
+      <button class="tab on" data-v="home" onclick="tab('home')">
+        <svg viewBox="0 0 24 24"><path d="M3 10l9-7 9 7v10a1 1 0 01-1 1h-5v-7H9v7H4a1 1 0 01-1-1z"/></svg>Главная</button>
+      <button class="tab" data-v="chat" onclick="tab('chat')">
+        <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 01-11.6 7.1L3 21l1.9-6.4A8 8 0 1121 12z"/></svg>Ассистент</button>
+      <button class="tab" data-v="hot" onclick="tab('hot')">
+        <svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3.1-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 2 .7 2.9a2 2 0 01-.5 2.1L8.1 9.9a16 16 0 006 6l1.2-1.2a2 2 0 012.1-.5c.9.3 1.9.6 2.9.7a2 2 0 011.7 2z"/></svg>Линия</button>
+      <button class="tab" data-v="find" onclick="tab('find')">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Поиск</button>
+    </nav>
+  </div>
+
+  <div class="confirm" id="confirmLayer">
+    <div class="confirm-box framed">
+      <div class="demo">Демо-режим · звонок не отправляется</div>
+      <div class="eyebrow" style="margin-top:16px">Прямой вызов</div>
+      <h2 style="margin-top:8px" id="cfTitle">—</h2>
+      <p class="sm muted" style="margin-top:10px" id="cfNote">—</p>
+      <button class="btn primary" style="margin-top:20px" onclick="closeConfirm()">Понятно</button>
+    </div>
+  </div>
+
+  <div class="sos-layer" id="sosLayer">
+    <div class="ticks on"><i></i></div>
+    <div id="sosHold" style="display:flex;flex-direction:column;flex:1">
+      <div class="eyebrow" style="text-align:center">Экстренная помощь</div>
+      <div class="hold-wrap">
+        <button class="hold" id="holdBtn" type="button" oncontextmenu="return false"
+          ondragstart="return false">Мне нужна<br>помощь<small>ЗАЖМИТЕ 2 СЕКУНДЫ</small>
+          <svg class="ring" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+            <circle class="bg" cx="50" cy="50" r="46" stroke-width="1.1"/>
+            <circle class="fg" cx="50" cy="50" r="46" stroke-width="1.1" id="ringFg"/>
+          </svg>
+        </button>
+        <p class="sm muted" style="text-align:center;max-width:270px">Без звука и без разговора. Телефон завибрирует, когда сигнал уйдёт.</p>
+      </div>
+      <button class="btn ghost" onclick="closeSOS()">Отмена</button>
+    </div>
+    <div id="sosSent" style="display:none;flex-direction:column;flex:1">
+      <div class="demo">Демо-режим · реальный вызов не отправлен</div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <i class="beacon"></i><h1 style="font-size:29px">Помощь в пути</h1>
+        </div>
+        <div class="card framed">
+          <div class="eyebrow">Передано диспетчеру</div>
+          <div class="stack sm" style="margin-top:12px">
+            <div>Координаты · <span class="mono">55.7558, 37.6173</span></div>
+            <div>Профиль · <span id="sosWho">—</span></div>
+            <div>Здоровье · <span id="sosHealth">—</span></div>
+          </div>
+        </div>
+        <div>
+          <p class="sm">Если можете — уточните, какая помощь нужна.</p>
+          <div class="svc" id="svcRow">
+            <button aria-pressed="false" data-svc="Пожарные" onclick="pickSvc(this)"><span class="num">01</span><span class="lb">Пожарные</span></button>
+            <button aria-pressed="false" data-svc="Полиция" onclick="pickSvc(this)"><span class="num">02</span><span class="lb">Полиция</span></button>
+            <button aria-pressed="false" data-svc="Скорая" onclick="pickSvc(this)"><span class="num">03</span><span class="lb">Скорая</span></button>
+          </div>
+          <button class="btn primary refine" id="svcSend" onclick="sendSvc()">Уточнить</button>
+          <p class="xs muted" id="svcHint" style="margin-top:10px">Можно выбрать несколько. Ничего не выбирайте, если не можете — бригада уже едет.</p>
+          <div class="svc-done" id="svcDone">
+            <span class="tick">✓</span><span id="svcDoneText">—</span>
+          </div>
+        </div>
+        <div class="mono sm muted">На связи <span id="sosTimer">00:00</span></div>
+      </div>
+      <button class="btn safe" onclick="closeSOS()">Помощь прибыла</button>
+    </div>
+  </div>
+
+  <div class="call-layer" id="callLayer">
+    <div class="ticks on"><i></i></div>
+    <div class="demo" id="callDemo">Демо-режим · вы говорите с ИИ, не со службой</div>
+    <div class="orb-wrap">
+      <div class="orb" id="orb"><div class="bars" id="bars"><i></i><i></i><i></i><i></i><i></i></div></div>
+      <div style="text-align:center">
+        <h2 id="callTitle">Экстренная помощь ⛑️</h2>
+        <div class="mono sm muted" style="margin-top:5px" id="callTimer">00:00</div>
+      </div>
+      <div class="state" id="callState">Соединение…</div>
+      <div class="transcript" id="transcript"></div>
+    </div>
+    <div style="padding-bottom:10px">
+      <div class="xs" id="micDiag" style="text-align:center;margin-bottom:10px;display:none"></div>
+      <input class="inp" id="callText" placeholder="Напишите оператору"
+        style="margin-bottom:10px;display:none" onkeydown="if(event.key==='Enter'){callUser(this.value);this.value=''}">
+      <div class="call-actions">
+        <button id="muteBtn" onclick="toggleMute()">🎙 Микрофон включён</button>
+        <button class="end" onclick="endCall()">Завершить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   ПРОМПТЫ AI-АГЕНТОВ  ·  правь только здесь
+   Полное описание — в PROMPTS.md
+   ════════════════════════════════════════════════════════════ */
+const PROMPTS = {
+
+  /* ── Агент 1: Ассистент по безопасности ── */
+  safety: ctx => `Ты — ИИ-ассистент по личной безопасности в российском приложении 112 AI.
+
+ДАННЫЕ ПОЛЬЗОВАТЕЛЯ
+${ctx}
+
+ТВОЯ РОЛЬ
+Ты консультируешь по безопасности и правильным действиям в опасных ситуациях:
+угроза БПЛА и обстрела, пожар, эвакуация, потеря связи, ДТП, преследование на улице,
+подозрительные предметы, первая помощь до приезда бригады, тревожный чемоданчик,
+безопасность детей и пожилых, поведение при отключении света и воды.
+Вторая твоя половина — психологическая поддержка человека, живущего рядом с опасностью.
+
+ГЛАВНОЕ ПРАВИЛО — СЕРЬЁЗНОСТЬ ОЦЕНИВАЕШЬ ТЫ, А НЕ ПОЛЬЗОВАТЕЛЬ
+Люди систематически недооценивают опасность: «да ничего страшного», «просто голова
+закружилась», «наверное само пройдёт», «неудобно вызывать из-за такого».
+Твоя работа — не соглашаться из вежливости. Если по описанию ситуация требует
+экстренной службы, ты говоришь об этом прямо: коротко объясняешь, чем это опасно,
+называешь конкретный признак, который человек упустил, и настаиваешь на вызове.
+Не пугаешь и не драматизируешь — объясняешь причину.
+
+Когда нужна экстренная служба, заверши ответ отдельной последней строкой:
+[ЛИНИЯ]
+
+Если человек в острой тревоге или панике прямо сейчас — ему тяжело печатать, и голос
+поможет больше, чем текст. В этом случае заверши ответ отдельной последней строкой:
+[ГОЛОС]
+Ставь её при панической атаке, острой тревоге, бессоннице на фоне страха, когда человек
+один и ему плохо. Не ставь при спокойных вопросах о безопасности и вместе с [ЛИНИЯ].
+Ставь метку только при реальной необходимости. При обычных вопросах её быть не должно.
+
+ПРИЗНАКИ, ПРИ КОТОРЫХ ВЫЗОВ НУЖЕН ВСЕГДА
+Потеря сознания даже кратковременная, спутанная речь, асимметрия лица, слабость в одной
+стороне тела, боль в груди, затруднённое дыхание, сильное кровотечение, судороги,
+тяжёлая аллергическая реакция, отравление, травма головы, ожог больше ладони,
+подозрение на перелом позвоночника или шеи, любая угроза со стороны другого человека.
+
+ВТОРАЯ РОЛЬ — ПСИХОЛОГИЧЕСКАЯ ПОДДЕРЖКА
+Ты умеешь разговаривать с людьми о тревоге и страхе, а не только о действиях.
+Тревога после сирены, бессонница, паническая атака, страх за близких, ощущение,
+что ты не справляешься, реакция ребёнка на происходящее — это твоя территория.
+
+Как ты это делаешь:
+— сначала признаёшь чувство, не обесцениваешь: реакция на опасность нормальна;
+— объясняешь, что происходит с телом, простыми словами;
+— даёшь одну конкретную технику, которую можно сделать прямо сейчас
+  (дыхание с удлинённым выдохом, заземление на пять органов чувств, разжимание челюсти);
+— спрашиваешь, стало ли легче, и остаёшься в разговоре.
+Не сыпь техниками списком. Одна за раз, и дождись ответа.
+
+ПРОТОКОЛ КРИЗИСА — САМОЕ ВАЖНОЕ
+Если человек говорит о нежелании жить, о том, что не видит выхода, о причинении вреда
+себе или другим, даже вскользь и даже в шутку:
+— отнесись всерьёз с первой фразы, не переспрашивай, не шутил ли он;
+— не обесценивай, не читай мораль, не давай советов в духе «просто отвлекись»;
+— скажи прямо, что не оставишь его одного в этом разговоре;
+— спроси, есть ли рядом человек, которому он доверяет, и предложи связаться с ним;
+— настойчиво направь к живому специалисту — это единственное, что ты здесь делаешь.
+Ты НИКОГДА не обсуждаешь способы причинения вреда, не оцениваешь их и не упоминаешь,
+даже чтобы отговорить. Ты не пытаешься лечить и не заменяешь психиатра.
+В такой ситуации всегда ставь метку [ЛИНИЯ].
+
+ЧЕГО ТЫ НЕ ДЕЛАЕШЬ
+— не ставишь диагнозы, в том числе психиатрические;
+— не назначаешь препараты и дозировки;
+— не успокаиваешь человека ценой его безопасности;
+— не заменяешь живого психолога и врача.
+
+СТИЛЬ
+Русский язык. 3–5 предложений. Сначала прямой ответ, потом причина.
+Конкретика вместо общих слов: не «будьте осторожны», а что именно сделать.
+Обращайся по имени. Без списков и разметки — это чат.`,
+
+  /* ── Агент 2: Диспетчер горячей линии (текст и голос) ── */
+  dispatch: ctx => `Ты ИИ-диспетчер горячей линии приложения 112 AI. Это ДЕМО-прототип, не настоящая служба.
+
+ДАННЫЕ ЗВОНЯЩЕГО
+${ctx}
+
+ТВОЯ РОЛЬ
+Ты ведёшь себя как обученный оператор экстренной службы. Твоя задача — за минимум реплик понять
+ситуацию и удержать человека до приезда бригады.
+
+ПОРЯДОК РАБОТЫ (строго по одному шагу за реплику)
+1. Что случилось.
+2. Где — уточни адрес, если он отличается от профиля.
+3. Есть ли угроза жизни, в сознании ли пострадавший, дышит ли.
+4. Дай ОДНО конкретное действие прямо сейчас.
+5. Скажи, что бригада направлена, и держи на связи.
+
+ПРАВИЛА
+— Одна-две короткие фразы за реплику. Никогда не длиннее.
+— Один вопрос за раз. Не заваливай вопросами.
+— Голос спокойный и уверенный. Ты не паникуешь и не драматизируешь.
+— Учитывай профиль: аллергии, хронические болезни, возраст.
+— Не ставишь диагнозы, не называешь препараты и дозировки.
+— Не отпускаешь человека и не молчишь: если он замолчал — окликни.
+— Только русский язык. Без списков, звёздочек и разметки — текст читается вслух.`,
+
+  /* ── Агент 3: Голосовая психологическая поддержка ── */
+  psyVoice: ctx => `Ты — специалист психологической поддержки в приложении 112 AI.
+Ты говоришь с человеком ГОЛОСОМ. Это ДЕМО-прототип, ты не заменяешь живого психолога.
+
+ДАННЫЕ СОБЕСЕДНИКА
+${ctx}
+
+СИТУАЦИЯ
+Человек сам попросил созвониться, потому что ему тревожно или у него паническая атака.
+Писать ему сейчас тяжелее, чем говорить. Возможно, он один, возможно — ночью.
+
+КАК ТЫ ГОВОРИШЬ
+Очень короткими фразами, по одной мысли за раз. Медленно, спокойно, тепло.
+Ты не спешишь и не заваливаешь вопросами. После каждой фразы даёшь человеку ответить.
+Обращайся по имени, но не в каждой реплике.
+
+ПОРЯДОК
+1. Поздоровайся и скажи, что ты рядом и никуда не уйдёшь.
+2. Спроси, что происходит прямо сейчас — в теле, не в мыслях.
+3. Если это паника: веди дыхание вслух. Вдох на четыре, выдох на шесть.
+   Считай вместе с ним, повторяй несколько кругов, спрашивай, стало ли ровнее.
+4. Когда дыхание выровнялось — заземление: пусть назовёт пять вещей, которые видит.
+5. Спроси, есть ли рядом кто-то из близких, к кому можно подойти.
+
+ЧТО ВАЖНО
+— Паническая атака не опасна для жизни и заканчивается сама. Скажи это прямо, спокойно.
+— Не обесценивай: никакого «да ладно, всё нормально», «просто расслабься».
+— Не ставь диагнозы, не называй препараты.
+— Не молчи дольше одной фразы. Если человек замолчал — окликни по имени.
+
+ЕСЛИ ЧЕЛОВЕК ГОВОРИТ О НЕЖЕЛАНИИ ЖИТЬ ИЛИ О ВРЕДЕ СЕБЕ
+Отнесись всерьёз с первой фразы. Не переспрашивай, не шутил ли он. Скажи, что остаёшься
+на связи. Спроси, есть ли рядом человек, которому он доверяет. Настойчиво направь
+к живому специалисту. Способы причинения вреда не обсуждай и не упоминай вообще.
+
+СТИЛЬ
+Только русский. Одна-две короткие фразы за реплику. Без списков, звёздочек и разметки —
+текст читается вслух.`,
+
+  /* ── Контекст пользователя, подставляется в оба промпта ── */
+  context(){
+    const p = S.profile;
+    const rel = S.relatives.map(r =>
+      `${r.name} (${r.rel||'близкий'}, ${r.age||'?'} лет, здоровье: ${(r.health||[]).join(', ')||'без отметок'})`
+    ).join('; ');
+    return [
+      `Имя: ${p.name||'—'}`,
+      `Возраст: ${p.age||'—'}, пол: ${p.sex||'—'}`,
+      `Адрес: ${p.addr||'—'}`,
+      `Здоровье: ${(p.health||[]).join(', ')||'без отметок'}`,
+      p.notes ? `Важно: ${p.notes}` : '',
+      rel ? `Близкие: ${rel}` : ''
+    ].filter(Boolean).join('\n');
+  }
+};
+
+/* ════════════════════════════════════════════════════════════
+   НАСТРОЙКИ
+   ════════════════════════════════════════════════════════════ */
+/* ┌────────────────────────────────────────────────────────────┐
+   │  ЕДИНСТВЕННОЕ, ЧТО НУЖНО ПОМЕНЯТЬ ПЕРЕД ЗАЛИВКОЙ           │
+   │  Вставь сюда адрес своего Cloudflare Worker.               │
+   │  Пошагово — в DEPLOY.md                                     │
+   └────────────────────────────────────────────────────────────┘ */
+const AI_ENDPOINT = 'ВСТАВЬ_СЮДА_АДРЕС_ВОРКЕРА';
+
+/* Модель для чата и для голоса. Голос — быстрее, чтобы не было пауз в разговоре. */
+const MODEL       = 'claude-sonnet-4-6';
+const MODEL_VOICE = 'claude-haiku-4-5';
+
+/* ════════════════════════════════════════════════════════════ */
+const S = { auth:null, geo:null, profile:{}, relatives:[], tab:'home', tour:0, editing:'self' };
+
+/* ═══════════ ПАМЯТЬ ПРОФИЛЯ ═══════════ */
+/* Прототип хранит анкету в браузере. Данные о здоровье — спецкатегория по 152-ФЗ,
+   в проде это должен быть российский сервер с явным согласием, не localStorage. */
+const SAVE_KEY = '112ai.profile.v1';
+function saveProfile(){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      auth:S.auth, geo:S.geo, profile:S.profile, relatives:S.relatives
+    }));
+  }catch(_){}
+}
+function loadProfile(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return false;
+    const d = JSON.parse(raw);
+    if(!d || !d.profile || !d.profile.name) return false;
+    S.auth=d.auth; S.geo=d.geo; S.profile=d.profile; S.relatives=d.relatives||[];
+    return true;
+  }catch(_){ return false; }
+}
+function forgetProfile(){
+  try{ localStorage.removeItem(SAVE_KEY); }catch(_){}
+  location.reload();
+}
+function boot(){
+  if(!loadProfile()) return;
+  const p=S.profile;
+  $('backName').textContent = p.name;
+  $('backAddr').textContent = p.addr || '—';
+  $('backHealth').textContent = (p.health||[]).join(', ') || 'без отметок';
+  $('backRel').textContent = S.relatives.length ? S.relatives.map(r=>r.name).join(', ') : 'не добавлены';
+  $('geoLabel').textContent = 'Геолокация · ' + (S.geo||'всегда').toLowerCase();
+  go('s-back');
+}
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+const buzz = ms => navigator.vibrate && navigator.vibrate(ms);
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  $(id).classList.add('on');
+  $('tickFrame').classList.toggle('on', id==='s-splash');
+}
+
+async function askAI(system, history, maxTokens = 600, model = MODEL){
+  if (AI_ENDPOINT.startsWith('ВСТАВЬ')){
+    throw new Error('AI_ENDPOINT не настроен — смотри DEPLOY.md');
+  }
+  const r = await fetch(AI_ENDPOINT, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ model, max_tokens:maxTokens, system, messages:history })
+  });
+  const d = await r.json();
+  return (d.content||[]).map(c=>c.text||'').join('\n').trim();
+}
+const SYS_SAFETY   = () => PROMPTS.safety(PROMPTS.context());
+const SYS_DISPATCH = () => PROMPTS.dispatch(PROMPTS.context());
+const SYS_PSYVOICE = () => PROMPTS.psyVoice(PROMPTS.context());
+
+/* ═══════════ ОНБОРДИНГ ═══════════ */
+function auth(kind){ S.auth = kind; go('s-geo'); }
+function geo(mode){
+  S.geo = mode;
+  $('geoLabel').textContent = 'Геолокация · ' + mode.toLowerCase();
+  saveProfile();
+  if (S.auth === 'gos'){
+    S.profile = {name:'Роман', age:'29', sex:'М', addr:'Москва, Тверская 12, кв. 44',
+                 health:['Аллергия'], notes:'Не переносит пенициллин'};
+    saveProfile();
+    startTour();
+  } else { openForm('self'); }
+}
+function pick(b, errId){
+  [...b.parentElement.children].forEach(c=>c.setAttribute('aria-pressed','false'));
+  b.setAttribute('aria-pressed','true');
+  if (errId) clearErr(errId, b.parentElement);
+}
+function toggle(b){ b.setAttribute('aria-pressed', b.getAttribute('aria-pressed')==='true'?'false':'true'); }
+function hToggle(b){
+  const box = b.parentElement;
+  if (b.dataset.none === '1'){
+    [...box.children].forEach(c=>c.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true');
+  } else {
+    box.querySelector('[data-none="1"]').setAttribute('aria-pressed','false');
+    toggle(b);
+  }
+  clearErr('eHealth', box);
+}
+function chosen(id){ return [...$(id).children].filter(c=>c.getAttribute('aria-pressed')==='true').map(c=>c.textContent.trim()); }
+
+let addrN = 0;
+function addAddr(){
+  if (addrN >= 3) return;
+  addrN++;
+  const l=document.createElement('label'); l.className='f';
+  l.innerHTML=`<span class="sm muted">Дополнительный ${addrN}</span><input class="inp" placeholder="Город, улица, дом">`;
+  $('extraAddr').appendChild(l);
+}
+
+/* ═══════════ ВАЛИДАЦИЯ ═══════════ */
+function showErr(errId, inputId, msg){
+  const e = $(errId);
+  e.textContent = msg; e.classList.add('on');
+  if (inputId) $(inputId).classList.add('bad');
+  return $(inputId) || e;
+}
+function clearErr(errId, chipsBox){
+  const e = $(errId); if(!e) return;
+  e.classList.remove('on'); e.textContent='';
+  if (chipsBox) chipsBox.classList.remove('bad');
+}
+function resetErrors(){
+  document.querySelectorAll('#s-form .err').forEach(e=>{e.classList.remove('on');e.textContent=''});
+  document.querySelectorAll('#s-form .inp').forEach(i=>i.classList.remove('bad'));
+  document.querySelectorAll('#s-form .chips').forEach(c=>c.classList.remove('bad'));
+}
+['fName','fRel','fAge','fAddr'].forEach(id=>{
+  document.addEventListener('DOMContentLoaded',()=>{});
+});
+
+function validate(){
+  resetErrors();
+  const isSelf = S.editing === 'self';
+  let first = null;
+  const fail = el => { if(!first) first = el; };
+
+  if (!$('fName').value.trim())
+    fail(showErr('eName','fName', isSelf ? 'Как к вам обращаться?' : 'Укажите имя близкого'));
+
+  if (!isSelf && !$('fRel').value.trim())
+    fail(showErr('eRel','fRel','Кем этот человек вам приходится?'));
+
+  const age = parseInt($('fAge').value, 10);
+  if (!$('fAge').value.trim()) fail(showErr('eAge','fAge','Возраст нужен бригаде'));
+  else if (isNaN(age) || age < 0 || age > 120) fail(showErr('eAge','fAge','Проверьте возраст'));
+
+  if (!chosen('fSex').length){
+    $('fSex').classList.add('bad');
+    fail(showErr('eSex', null, 'Выберите пол'));
+  }
+
+  if (!$('fAddr').value.trim())
+    fail(showErr('eAddr','fAddr','Куда направлять помощь?'));
+
+  if (!chosen('fHealth').length){
+    $('fHealth').classList.add('bad');
+    fail(showErr('eHealth', null, 'Отметьте что-то или нажмите «Ничего из этого»'));
+  }
+
+  if (first){
+    buzz(80);
+    first.classList.add('shake');
+    setTimeout(()=>first.classList.remove('shake'), 320);
+    first.scrollIntoView({behavior:'smooth', block:'center'});
+    if (first.focus) first.focus({preventScroll:true});
+    return false;
+  }
+  return true;
+}
+
+/* ═══════════ АНКЕТА ═══════════ */
+function openForm(mode){
+  S.editing = mode;
+  const self = mode === 'self';
+  $('formTitle').textContent = self ? 'О вас' : 'О близком';
+  $('formSub').textContent = self
+    ? 'Это увидит только бригада, которая к вам едет.'
+    : 'Те же вопросы, что и о вас. В критической ситуации это экономит минуты.';
+  $('fRelWrap').style.display = self ? 'none' : 'block';
+  $('formBtn').textContent = self ? 'Сохранить' : 'Сохранить близкого';
+  $('formSteps').style.display = self ? 'flex' : 'none';
+  ['fName','fRel','fAge','fAddr','fNotes'].forEach(i=>$(i).value='');
+  document.querySelectorAll('#fSex .chip,#fHealth .chip').forEach(c=>c.setAttribute('aria-pressed','false'));
+  $('extraAddr').innerHTML=''; addrN=0;
+  resetErrors();
+  $('formScroll').scrollTop = 0;
+  go('s-form');
+}
+function readForm(){
+  const h = chosen('fHealth').filter(x=>x!=='Ничего из этого');
+  return {
+    name:$('fName').value.trim(), rel:$('fRel').value.trim(),
+    age:$('fAge').value.trim(), sex:chosen('fSex')[0]||'',
+    addr:$('fAddr').value.trim(), health:h, notes:$('fNotes').value.trim()
+  };
+}
+function saveForm(){
+  if (!validate()) return;
+  const data = readForm();
+  if (S.editing === 'self'){ S.profile = data; saveProfile(); startTour(); }
+  else { S.relatives.push(data); saveProfile(); paintFam(); go('s-famlist'); }
+}
+function famForm(){ openForm('rel'); }
+function paintFam(){
+  const html = S.relatives.map(r=>`<div class="card framed">
+    <h3>${esc(r.name)}</h3>
+    <p class="xs muted" style="margin-top:5px">${esc(r.rel)} · ${esc(r.age)} лет</p>
+    <p class="xs" style="margin-top:6px;color:var(--sos)">${esc((r.health||[]).join(', ')||'без отметок')}</p></div>`).join('');
+  $('famList').innerHTML=html; $('famList2').innerHTML=html;
+}
+function famDone(added){
+  $('doneH').textContent = added ? 'Спасибо' : 'Понял вас';
+  $('doneP').textContent = added
+    ? 'Забота о близких — это лучшее, что может быть. Вы всегда сможете обновить эту информацию через чат с ассистентом.'
+    : 'Хорошо. Вы всегда сможете добавить близких через чат с ассистентом — просто напишите мне.';
+  go('s-famdone');
+}
+
+/* очистка ошибок при вводе */
+['fName','fRel','fAge','fAddr'].forEach(id=>{
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', ()=>{
+    el.classList.remove('bad');
+    clearErr('e'+id.slice(1));
+  });
+});
+
+/* ═══════════ ЭКСКУРСИЯ ═══════════ */
+const TOUR = [
+  ['Главная','Всё, что происходит вокруг вас прямо сейчас: угрозы в вашем районе, ближайшее укрытие, аптеки, отключения. Информация подтягивается по вашей геолокации.'],
+  ['Ассистент','Спрашивайте что угодно о безопасности: что делать при БПЛА, пожаре, эвакуации, как оказать первую помощь. И отдельно — я работаю как психолог: тревога, паника, бессонница, страх за близких. Об этом тоже можно и нужно говорить. А если ситуация окажется серьёзнее, чем вам кажется, я скажу прямо и переведу на горячую линию.'],
+  ['Горячая линия','Две кнопки, обе вызывают помощь. Можете говорить — жмите «Вызов», оператор ответит сразу. Не можете — жмите SOS, помощь выедет молча вместе с вашими координатами и данными о здоровье.'],
+  ['Поиск','Опишите словами, что ищете: укрытие, аптеку, что делать при отключении связи. Найдём и объясним.']
+];
+function startTour(){ S.tour=0; paintTour(); go('s-tour'); }
+function paintTour(){
+  const [h,p]=TOUR[S.tour];
+  $('tourH').textContent=h; $('tourP').textContent=p;
+  $('tourN').textContent=String(S.tour+1).padStart(2,'0')+' / 04';
+  $('tourBtn').textContent = S.tour===TOUR.length-1?'Понятно':'Дальше';
+}
+function tourNext(){
+  if (S.tour < TOUR.length-1){ S.tour++; paintTour(); return; }
+  go('s-fam');
+}
+
+/* ═══════════ ЗАПУСК ═══════════ */
+function launch(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  $('tickFrame').classList.remove('on');
+  $('main').style.display='flex';
+  const p=S.profile;
+  $('hotWho').textContent = `${p.name}, ${p.age} лет`;
+  $('hotHealth').textContent = (p.health||[]).join(', ')||'без отметок';
+  renderHome();
+  botSay(`${p.name}, я здесь по двум вопросам. Первый — что делать в опасной ситуации: подскажу порядок действий и не буду вас успокаивать, если дело серьёзное. Второй — как вы это переживаете: тревога, паника, бессонница, страх за близких. Об этом можно писать в любое время.`);
+}
+function tab(v){
+  S.tab=v;
+  document.querySelectorAll('.v').forEach(e=>e.style.display='none');
+  $('v-'+v).style.display = (v==='chat'||v==='find') ? 'flex' : 'block';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.v===v));
+  $('fab').style.display = (v==='hot'||v==='chat'||v==='find') ? 'none' : 'flex';
+}
+
+/* ═══════════ ЛЕНТА ГЛАВНОЙ ═══════════ */
+/* Карточки сортируются по уровню тревоги, а не по фиксированным местам.
+   Уровень: 3 критично · 2 предупреждение · 1 фон · 0 не показывать.
+   При равном уровне порядок задаёт ORDER ниже. */
+const ORDER = { security:0, weather:1, psy:2 };
+
+/* true — блок безопасности всегда первый, даже если погода опаснее */
+const PIN_SECURITY_TOP = false;
+
+let demoState = 0;                       /* 0 — угроза БПЛА, 1 — мирно */
+
+function homeCards(){
+  const threat = demoState === 0
+    ? { id:'security', level:3, cls:'card crit framed', tone:'var(--sos)',
+        tag:'Угроза БПЛА · действует', title:'Отойдите от окон',
+        text:'Спуститесь ниже или в помещение без внешних стен.',
+        link:['Что делать →','Что делать при угрозе БПЛА?'] }
+    : { id:'security', level:1, cls:'card ok framed', tone:'var(--safe)',
+        tag:'Безопасность района', title:'Сейчас угроз нет',
+        text:'Последняя тревога — 28 июля, 19:40. Ближайшее укрытие в 340 метрах.' };
+
+  const weather = demoState === 0
+    ? { id:'weather', level:2, cls:'card alert', tone:'var(--amber)',
+        tag:'Метео · до 21:00', title:'Шквалистый ветер 22 м/с',
+        text:'Не паркуйтесь под деревьями и щитами.' }
+    : { id:'weather', level:0 };
+
+  const psy = { id:'psy', level:1, cls:'card calm framed', tone:'var(--safe)', soft:1,
+    tag:'Психологическая поддержка', title:'Тревога после сирены — это нормально',
+    text:'Ассистент выслушает и поможет справиться. В любое время суток.',
+    link:['Поговорить →','Мне тревожно, хочу поговорить'] };
+
+  return [threat, weather, psy].filter(c => c.level > 0);
+}
+
+function renderHome(){
+  const cards = homeCards().sort((a,b)=>{
+    if (PIN_SECURITY_TOP && a.id !== b.id){
+      if (a.id === 'security') return -1;
+      if (b.id === 'security') return 1;
+    }
+    return (b.level - a.level) || (ORDER[a.id] - ORDER[b.id]);
+  });
+  $('homeFeed').innerHTML = cards.map(c => `
+    <div class="${c.cls}">
+      <div class="eyebrow" style="color:${c.tone}">${esc(c.tag)}</div>
+      <h3 style="margin-top:7px">${esc(c.title)}</h3>
+      <p class="sm muted" style="margin-top:5px">${esc(c.text)}</p>
+      ${c.link ? `<button class="golink${c.soft?' soft':''}" onclick="openAsk('${c.link[1].replace(/'/g,"\\'")}')">${esc(c.link[0])}</button>` : ''}
+    </div>`).join('');
+}
+
+/* для показа: тап по названию района переключает «угроза ⇄ мирно» */
+function cycleDemo(){ demoState = (demoState+1) % 2; renderHome(); buzz(25); }
+
+/* ═══════════ АССИСТЕНТ ═══════════ */
+const HIST=[];
+function bubble(cls,html){
+  const d=document.createElement('div'); d.className=cls; d.innerHTML=html;
+  $('chatBox').appendChild(d); $('chatBox').scrollTop=$('chatBox').scrollHeight; return d;
+}
+const botSay = t => bubble('msg bot',`<div class="who">Ассистент</div>${esc(t)}`);
+const meSay  = t => bubble('msg me', esc(t));
+
+/* красную плашку ставит сам агент — меткой [ЛИНИЯ] в конце ответа */
+function offerVoice(){
+  const d=bubble('offer',
+    `<p>Если тяжело печатать — давайте просто поговорим. Я буду вести вас голосом, дышать вместе с вами. Можно молчать сколько нужно.</p>
+     <button class="go" onclick="acceptVoice(this)">📞 Позвонить и поговорить</button>
+     <button class="stay" onclick="declineVoice(this)">Останусь в чате</button>`);
+  buzz(20);
+  return d;
+}
+function acceptVoice(b){
+  b.closest('.offer').classList.add('used');
+  b.closest('.offer').querySelectorAll('button').forEach(x=>x.disabled=true);
+  openCall('psy');
+}
+function declineVoice(b){
+  const box=b.closest('.offer');
+  box.classList.add('used');
+  box.querySelectorAll('button').forEach(x=>x.disabled=true);
+  botSay('Хорошо, остаёмся здесь. Пишите столько, сколько нужно — я никуда не денусь.');
+}
+
+function escalate(){
+  bubble('escalate',
+    `<p>Судя по описанию, это случай для экстренной службы. Не ждите и не проверяйте, «пройдёт ли само».</p>
+     <button onclick="tab('hot')">Открыть горячую линию</button>`);
+  buzz([60,50,60]);
+}
+
+function openAsk(q){ tab('chat'); ask(q); }
+function ask(q){ if(!q||!q.trim()) return; $('chatIn').value=q; sendChat(); }
+
+async function sendChat(){
+  const t=$('chatIn').value.trim(); if(!t) return;
+  $('chatIn').value=''; meSay(t);
+  /* если человек прямо назвал панику — голос предлагаем в любом случае */
+  const panicAsked = /паническ|паник|тревожно|не могу дышать|трясёт|трясет/i.test(t);
+  HIST.push({role:'user',content:t});
+  const wait=bubble('msg bot',`<div class="who">Ассистент</div><span class="muted">думает…</span>`);
+  let a;
+  try{ a=await askAI(SYS_SAFETY(),HIST,700); }
+  catch(e){
+    wait.remove();
+    botSay('Связь с ассистентом пропала. Если дело срочное — откройте вкладку «Линия», она работает всегда.');
+    return;
+  }
+  wait.remove();
+  HIST.push({role:'assistant',content:a});
+  const urgent = a.includes('[ЛИНИЯ]');
+  const voice  = a.includes('[ГОЛОС]');
+  botSay(a.split('[ЛИНИЯ]').join('').split('[ГОЛОС]').join('').trim());
+  if(urgent) escalate();
+  else if(voice || panicAsked) offerVoice();
+}
+
+/* ═══════════ ГОЛОСОВОЙ ВЫЗОВ ═══════════ */
+let callMode='dispatch';
+let rec=null, listening=false, heard='', micReady=false, muted=false,
+    callActive=false, silenceTimer=null,
+    callSec=0, callTick=null, speaking=false, barTick=null;
+const CALL=[];
+function say(text){
+  return new Promise(res=>{
+    if(!window.speechSynthesis) return res();
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='ru-RU'; u.rate=1.04; u.pitch=.95;
+    const v=speechSynthesis.getVoices().find(x=>x.lang&&x.lang.toLowerCase().startsWith('ru'));
+    if(v) u.voice=v;
+    speaking=true; hush(); setState('Говорит оператор'); animateBars(true);
+    u.onend=u.onerror=()=>{ speaking=false; animateBars(false); res(); };
+    speechSynthesis.speak(u);
+  });
+}
+function setState(t){ $('callState').textContent=t; }
+function animateBars(on){
+  const bars=[...$('bars').children];
+  $('orb').classList.toggle('live',on);
+  clearInterval(barTick);
+  if(!on){ bars.forEach(b=>b.style.height='8px'); return; }
+  barTick=setInterval(()=>bars.forEach(b=>b.style.height=(8+Math.random()*34)+'px'),130);
+}
+function line(who,text,me){
+  const d=document.createElement('div');
+  d.className='line'+(me?' me':'');
+  d.innerHTML=`<b>${who}</b>${esc(text)}`;
+  $('transcript').appendChild(d); $('transcript').scrollTop=$('transcript').scrollHeight;
+}
+async function openCall(mode){
+  callMode = (mode==='psy') ? 'psy' : 'dispatch';
+  const psy = callMode==='psy';
+  $('callTitle').textContent = psy ? 'Поддержка · разговор' : 'Экстренная помощь ⛑️';
+  $('callDemo').textContent  = psy
+    ? 'Демо-режим · это ИИ, а не живой психолог'
+    : 'Демо-режим · вы говорите с ИИ, не со службой';
+  $('callLayer').classList.toggle('psy', psy);
+  $('callLayer').classList.add('on');
+  $('transcript').innerHTML=''; CALL.length=0;
+  callActive=true; muted=false; heard=''; micReady=false;
+  $('muteBtn').textContent='🎙 Микрофон включён';
+  $('muteBtn').classList.remove('off');
+  $('callText').style.display='none';
+  diag('');
+  callSec=0; $('callTimer').textContent='00:00';
+  clearInterval(callTick);
+  callTick=setInterval(()=>{ callSec++;
+    $('callTimer').textContent=String(Math.floor(callSec/60)).padStart(2,'0')+':'+String(callSec%60).padStart(2,'0');
+  },1000);
+  buzz(60);
+  setState('Соединение…');
+  await primeMic();                    /* разрешение спрашивается сразу, по нажатию «Вызов» */
+  const hello = callMode==='psy'
+    ? `${S.profile.name}, я здесь. Никуда не уйду. Скажите, что сейчас происходит?`
+    : 'Экстренная служба, слушаю вас. Что случилось?';
+  line(callMode==='psy'?'Поддержка':'Оператор',hello); CALL.push({role:'assistant',content:hello});
+  await say(hello);
+  listen();
+}
+/* ── диагностика ── */
+const MIC_ERR = {
+  'not-allowed':'Доступ к микрофону запрещён — разрешите его в настройках сайта',
+  'service-not-allowed':'Браузер заблокировал распознавание речи',
+  'audio-capture':'Микрофон не найден',
+  'network':'Нет связи с сервисом распознавания',
+  'no-speech':'', 'aborted':''
+};
+function diag(msg, bad){
+  const d=$('micDiag'); if(!d) return;
+  d.textContent = msg || '';
+  d.style.display = msg ? 'block' : 'none';
+  d.style.color = bad ? 'var(--sos)' : 'var(--muted)';
+}
+function fallbackToText(msg){
+  micReady=false;
+  diag(msg, true);
+  $('callText').style.display='block';
+  $('muteBtn').style.opacity='.4';
+  setState('Печатайте — оператор ответит голосом');
+}
+
+/* Сначала честно пробуем взять микрофон. Диагноз ставим только если не вышло. */
+async function primeMic(){
+  if(!navigator.mediaDevices || !(window.SpeechRecognition||window.webkitSpeechRecognition)){
+    fallbackToText('Этот браузер не распознаёт речь. Нужен Chrome или Safari.');
+    return false;
+  }
+  try{
+    const s = await navigator.mediaDevices.getUserMedia({audio:true});
+    s.getTracks().forEach(t=>t.stop());
+    micReady=true; diag(''); $('callText').style.display='none'; $('muteBtn').style.opacity='1';
+    return true;
+  }catch(e){
+    if (window.self !== window.top)
+      fallbackToText('Страница открыта во фрейме — микрофон блокирует сам браузер. Откройте её отдельной вкладкой.');
+    else if (!window.isSecureContext)
+      fallbackToText('Нужен HTTPS. Через file:// микрофон не работает.');
+    else
+      fallbackToText('Доступ к микрофону запрещён — разрешите его в настройках сайта.');
+    return false;
+  }
+}
+
+/* ── разговор без рук: слушаем непрерывно, отправляем по паузе ── */
+function initRec(){
+  const R=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!R) return null;
+  const r=new R();
+  r.lang='ru-RU'; r.interimResults=true; r.continuous=true; r.maxAlternatives=1;
+  r.onresult=e=>{
+    if(speaking) return;                       /* не слушаем сами себя */
+    let interim='', gotFinal=false;
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const t=e.results[i][0].transcript;
+      if(e.results[i].isFinal){ heard+=t+' '; gotFinal=true; } else interim=t;
+    }
+    const live=(heard+interim).trim();
+    if(live) setState(live.length>52?'…'+live.slice(-52):live);
+    clearTimeout(silenceTimer);
+    silenceTimer=setTimeout(flush, gotFinal?900:1600);
+  };
+  r.onerror=e=>{
+    const m=MIC_ERR[e.error];
+    if(e.error==='not-allowed'||e.error==='service-not-allowed') fallbackToText(m);
+    else if(m) diag(m,true);
+  };
+  r.onend=()=>{
+    listening=false;
+    if(callActive && micReady && !muted && !speaking) setTimeout(listen,250);
+  };
+  return r;
+}
+function flush(){
+  const t=heard.trim(); heard='';
+  if(t) callUser(t);
+}
+function listen(){
+  if(!callActive||!micReady||muted||speaking||listening) return;
+  if(!rec) rec=initRec();
+  if(!rec) return;
+  try{ rec.start(); listening=true; setState('Слушаю'); animateBars(true); }
+  catch(_){ listening=false; }
+}
+function hush(){
+  clearTimeout(silenceTimer);
+  listening=false;
+  try{ rec && rec.stop(); }catch(_){}
+  animateBars(false);
+}
+function toggleMute(){
+  muted=!muted;
+  $('muteBtn').textContent = muted ? '🔇 Включить микрофон' : '🎙 Микрофон включён';
+  $('muteBtn').classList.toggle('off', muted);
+  if(muted){ hush(); setState('Микрофон выключен'); }
+  else { setState('Слушаю'); listen(); }
+}
+
+async function callUser(text){
+  if(!text||!text.trim()) return;
+  hush();
+  line('Вы',text,true); CALL.push({role:'user',content:text});
+  setState('Обрабатываю');
+  let a;
+  try{
+    a = await askAI(callMode==='psy' ? SYS_PSYVOICE() : SYS_DISPATCH(), CALL, 220, MODEL_VOICE);
+  }catch(e){
+    a = callMode==='psy'
+      ? 'Связь прервалась, но я рядом. Давайте просто подышим: вдох на четыре, выдох на шесть.'
+      : 'Бригада направлена по вашим координатам. Оставайтесь на линии.';
+  }
+  CALL.push({role:'assistant',content:a});
+  line(callMode==='psy'?'Поддержка':'Оператор',a);
+  await say(a);
+  if(callActive) listen();
+}
+function endCall(){
+  callActive=false; listening=false; heard='';
+  clearTimeout(silenceTimer); clearInterval(callTick); clearInterval(barTick);
+  try{ rec&&rec.abort(); }catch(_){}
+  if(window.speechSynthesis) speechSynthesis.cancel();
+  $('callLayer').classList.remove('on');
+  if(callMode==='psy' && CALL.length>1){
+    tab('chat');
+    botSay('Мы поговорили. Если снова накроет — пишите или звоните, я здесь в любое время.');
+  }
+}
+
+/* ═══════════ ПРЯМОЙ НАБОР СЛУЖБ ═══════════ */
+function confirmCall(num,label){
+  $('cfTitle').textContent=label;
+  $('cfNote').textContent='В рабочей версии отсюда пойдёт вызов на '+num+'. В прототипе набор отключён, чтобы никого не беспокоить.';
+  $('confirmLayer').classList.add('on');
+  buzz(30);
+}
+function closeConfirm(){ $('confirmLayer').classList.remove('on'); }
+
+/* ═══════════ SOS ═══════════ */
+let holdTimer=null, raf=null, sosTick=null, sosSec=0;
+/* Длина окружности при r=46 в системе координат viewBox.
+   Через getTotalLength() нельзя: у скрытого элемента Safari возвращает 0,
+   и дуга превращается в сплошное кольцо. */
+const R_RING = 46;
+const RING = 2 * Math.PI * R_RING;
+function ringReset(){
+  const el=$('ringFg');
+  el.setAttribute('stroke-dasharray', RING);
+  el.setAttribute('stroke-dashoffset', RING);
+}
+ringReset();
+function openSOS(){
+  $('sosLayer').classList.add('on');
+  $('sosHold').style.display='flex'; $('sosSent').style.display='none';
+  ringReset();
+}
+function closeSOS(){
+  $('sosLayer').classList.remove('on'); clearInterval(sosTick);
+  document.querySelectorAll('.svc button').forEach(b=>{
+    b.setAttribute('aria-pressed','false'); b.disabled=false;
+  });
+  $('svcSend').classList.remove('on');
+  $('svcDone').classList.remove('on');
+  $('svcHint').style.display='block';
+}
+const hb=$('holdBtn');
+function holdStart(e){
+  e.preventDefault();
+  const ring=$('ringFg');
+  ringReset();
+  hb.classList.add('holding');
+  buzz(18);                                  /* отклик на само нажатие */
+  let t0=null, ticks=0;
+  const step=ts=>{
+    if(t0===null) t0=ts;                     /* отсчёт от первого кадра, а не от нажатия */
+    const p=Math.min((ts-t0)/2000,1);
+    ring.setAttribute('stroke-dashoffset', RING*(1-p));
+    const q=Math.floor(p*4);                 /* короткий тик на каждой четверти */
+    if(q>ticks && q<4){ ticks=q; buzz(12); }
+    if(p<1) raf=requestAnimationFrame(step);
+  };
+  raf=requestAnimationFrame(step);
+  holdTimer=setTimeout(sosFire,2000);
+}
+function holdEnd(){
+  clearTimeout(holdTimer); cancelAnimationFrame(raf);
+  hb.classList.remove('holding');
+  ringReset();
+}
+hb.addEventListener('pointerdown',holdStart);
+['pointerup','pointercancel','pointerleave'].forEach(ev=>hb.addEventListener(ev,holdEnd));
+function askForget(){
+  if(confirm('Удалить сохранённый профиль с этого устройства?')) forgetProfile();
+}
+
+boot();
+
+function pickSvc(b){
+  toggle(b);
+  const any = !!$('svcRow').querySelector('[aria-pressed="true"]');
+  $('svcSend').classList.toggle('on', any);
+  buzz(12);
+}
+function sendSvc(){
+  const picked=[...$('svcRow').querySelectorAll('[aria-pressed="true"]')].map(b=>b.dataset.svc);
+  if(!picked.length) return;
+  $('svcDoneText').textContent='Передано диспетчеру: '+picked.join(', ')+'. Бригада уже в пути.';
+  $('svcDone').classList.add('on');
+  $('svcSend').classList.remove('on');
+  $('svcHint').style.display='none';
+  $('svcRow').querySelectorAll('button').forEach(b=>b.disabled=true);
+  buzz([60,40,60]);
+}
+
+function sosFire(){
+  hb.classList.remove('holding');
+  buzz([90,50,90,50,220]);   /* сигнал ушёл — длинный финальный отклик */
+  const p=S.profile;
+  $('sosWho').textContent=`${p.name||'—'}, ${p.age||'—'} лет`;
+  $('sosHealth').textContent=((p.health||[]).join(', ')||'без отметок')+(p.notes?' · '+p.notes:'');
+  $('sosHold').style.display='none'; $('sosSent').style.display='flex';
+  sosSec=0; clearInterval(sosTick);
+  sosTick=setInterval(()=>{ sosSec++;
+    $('sosTimer').textContent=String(Math.floor(sosSec/60)).padStart(2,'0')+':'+String(sosSec%60).padStart(2,'0');
+  },1000);
+}
+
+</script>
+</body>
+</html>
